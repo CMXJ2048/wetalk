@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.wetalk.dto.UserDto;
 import com.wetalk.models.User;
+import com.wetalk.repositories.UserRepository;
+import com.wetalk.services.JwtService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import com.wetalk.services.UserService;
 
 /**
@@ -22,6 +25,10 @@ public class AuthController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired private UserRepository userRepository;
+    @Autowired private JwtService jwtService;
+    @Autowired private PasswordEncoder passwordEncoder;
 
     /**
      * Registers a new user.
@@ -38,8 +45,17 @@ public class AuthController {
      * Login placeholder. Will return JWT token after implementing authentication.
      */
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody UserDto userDto) {
-        // Placeholder for future JWT login implementation
-        return ResponseEntity.ok("login not implemented");
+    public ResponseEntity<java.util.Map<String, Object>> login(@RequestBody UserDto userDto) {
+        // Simple login by account + password
+        User u = userRepository.findByAccount(userDto.getAccount());
+        if (u == null) {
+            return ResponseEntity.status(401).body(java.util.Map.of("error", "Invalid credentials"));
+        }
+        // Password verification
+    if (!passwordEncoder.matches(userDto.getPassword(), u.getPassword())) {
+            return ResponseEntity.status(401).body(java.util.Map.of("error", "Invalid credentials"));
+        }
+        String token = jwtService.generateToken(u.getId(), u.getAccount());
+        return ResponseEntity.ok(java.util.Map.of("token", token, "userId", u.getId(), "account", u.getAccount()));
     }
 }

@@ -2,13 +2,191 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WeTalk - HTML</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WeTalk 登录</title>
+  <!-- Mars-style display font for the brand -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --deep-blue: #1e3a8a; /* 深蓝 */
+        --deep-blue-hover: #1a2f70;
+        --card-bg: rgba(255, 255, 255, 0.96);
+        --text: #0f172a;
+        --muted: #64748b;
+        --border: #e2e8f0;
+    --mars-green: #86efac; /* 浅绿色（火星风格） */
+      }
+      html, body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+        color: var(--text);
+        background: linear-gradient(45deg, #ff512f, #dd2476); /* 左下→右上 鲜艳渐变 */
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+      }
+      #bg-canvas {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 0;
+        display: block;
+      }
+      .card {
+        width: min(92vw, 380px);
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        padding: 24px;
+        backdrop-filter: blur(6px);
+  position: relative;
+  z-index: 1;
+      }
+      .brand {
+        text-align: center;
+        margin-bottom: 16px;
+      }
+      .brand h1 {
+        margin: 0 0 6px;
+        font-size: 26px; /* 加大一号 */
+        letter-spacing: 1px;
+        font-family: 'Audiowide', system-ui, sans-serif; /* 火星文字体风格 */
+        color: var(--mars-green); /* 浅绿色 */
+        text-shadow: 0 2px 8px rgba(134, 239, 172, 0.35);
+      }
+      .brand p { margin: 0; color: var(--muted); font-size: 13px; font-weight: 600; }
+      form { display: grid; gap: 12px; }
+      label { font-size: 13px; color: var(--muted); font-weight: 600; }
+      input[type="text"], input[type="password"], input[type="email"] {
+        width: 100%;
+        height: 44px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        padding: 0 12px;
+        font-size: 14px;
+        background: #fff;
+        box-sizing: border-box; /* 防止选中时尺寸溢出 */
+        font-weight: 600; /* 其他字体加粗 */
+        outline: none;
+      }
+      input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focus {
+        border-color: var(--deep-blue);
+        /* 使用外发光而非加粗边框，避免布局变化导致溢出 */
+        box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.25);
+      }
+      /* 非法输入时的样式 */
+      input.invalid {
+        border-color: #dc2626;
+        box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.25);
+      }
+      .btn-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .input-wrap { position: relative; }
+      .input-wrap input { padding-right: 36px; }
+      .ok-icon {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #16a34a; /* 绿色对勾 */
+        font-weight: 800;
+        display: none;
+        pointer-events: none;
+      }
+      .input-wrap.valid .ok-icon { display: block; }
+      .btn {
+        height: 44px;
+        border-radius: 9999px; /* 椭圆按钮 */
+        border: 1px solid transparent;
+        font-size: 14px;
+        cursor: pointer;
+        font-weight: 700; /* 其他字体加粗 */
+      }
+      .btn[disabled] { opacity: .55; cursor: not-allowed; }
+      .btn-login { background: var(--deep-blue); color: #fff; }
+      .btn-login:hover { background: var(--deep-blue-hover); }
+      .btn-register { background: #fff; color: var(--deep-blue); border-color: var(--deep-blue); }
+      .hint { text-align: center; color: var(--muted); font-size: 12px; margin-top: 6px; min-height: 1.2em; font-weight: 600; }
+      .error { color: #b91c1c; }
+      .success { color: #065f46; }
+      .strength { font-size: 12px; font-weight: 700; margin-top: 4px; }
+      .strength.weak { color: #dc2626; }
+      .strength.medium { color: #d97706; }
+      .strength.strong { color: #16a34a; }
+    </style>
   </head>
   <body>
-    <h1>WeTalk</h1>
-    <p id="status">Loading users...</p>
-    <ul id="users"></ul>
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
+    <main class="card">
+      <div class="brand">
+        <h1>WeTalk</h1>
+        <p id="brand-sub">欢迎登录</p>
+      </div>
+      <!-- 登录表单 -->
+      <form id="login-form">
+        <div>
+          <label for="account">用户名</label>
+          <input id="account" name="account" type="text" autocomplete="username" placeholder="请输入用户名" required />
+        </div>
+        <div>
+          <label for="password">密码</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" placeholder="请输入密码" required />
+        </div>
+        <div class="btn-row">
+          <!-- 注册键在左，登录键在右 -->
+          <button type="button" class="btn btn-register" id="btn-register">注册</button>
+          <button type="submit" class="btn btn-login" id="btn-login">登录</button>
+        </div>
+        <div id="hint" class="hint" aria-live="polite"></div>
+      </form>
+
+      <!-- 注册表单（初始隐藏） -->
+      <form id="register-form" style="display:none">
+        <div class="input-wrap">
+          <label for="r-account">账户名</label>
+          <input id="r-account" name="account" type="text" placeholder="请输入账户名（唯一）" required />
+          <span class="ok-icon">✓</span>
+        </div>
+        <div class="input-wrap">
+          <label for="r-email">邮箱</label>
+          <input id="r-email" name="email" type="email" placeholder="请输入邮箱" required />
+          <span class="ok-icon">✓</span>
+        </div>
+        <div class="input-wrap">
+          <label for="r-displayName">昵称</label>
+          <input id="r-displayName" name="displayName" type="text" placeholder="请输入昵称" required />
+          <span class="ok-icon">✓</span>
+        </div>
+        <div class="input-wrap">
+          <label for="r-password">密码</label>
+          <input id="r-password" name="password" type="password" placeholder="请输入密码" required />
+          <span class="ok-icon">✓</span>
+          <div id="strength" class="strength"></div>
+        </div>
+        <div class="input-wrap">
+          <label for="r-password2">重复密码</label>
+          <input id="r-password2" name="password2" type="password" placeholder="请再次输入密码" required />
+          <span class="ok-icon">✓</span>
+        </div>
+        <div class="btn-row">
+          <!-- 返回登录在左，注册在右 -->
+          <button type="button" class="btn btn-register" id="btn-back-login">返回登录</button>
+          <button type="submit" class="btn btn-login" id="btn-register-submit" disabled>注册</button>
+        </div>
+        <div id="hint-register" class="hint" aria-live="polite"></div>
+      </form>
+    </main>
     <script type="module" src="/main.js"></script>
   </body>
 </html>

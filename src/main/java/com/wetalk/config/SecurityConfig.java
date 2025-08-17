@@ -5,12 +5,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
 
 /**
  * Security configuration using Spring Security 6 style.
@@ -20,6 +22,9 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Autowired
+    private JwtAuthFilter jwtAuthFilter;
 
     /**
      * Defines the HTTP security rules for the application.
@@ -32,30 +37,18 @@ public class SecurityConfig {
         http
             .cors(Customizer.withDefaults())
             .csrf(csrf -> csrf.disable())
+            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/uploads/**", "/picture_base/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/users").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/users/**").permitAll()
+                .requestMatchers("/api/friends/**", "/api/channels/**").authenticated()
                 .anyRequest().authenticated()
             )
-            .formLogin(Customizer.withDefaults())
-            .logout(Customizer.withDefaults());
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
-    }
-
-    /**
-     * Temporary in-memory users to allow quick manual testing without a database-backed user store.
-     * Replace with a UserDetailsService wired to your persistence layer when implementing real auth.
-     */
-    @Bean
-    public InMemoryUserDetailsManager userDetailsService(PasswordEncoder passwordEncoder) {
-        UserDetails user = User.withUsername("user")
-            .password(passwordEncoder.encode("password"))
-            .roles("USER").build();
-        UserDetails admin = User.withUsername("admin")
-            .password(passwordEncoder.encode("admin"))
-            .roles("ADMIN").build();
-        return new InMemoryUserDetailsManager(user, admin);
     }
 
     /**

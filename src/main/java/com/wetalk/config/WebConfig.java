@@ -1,8 +1,9 @@
 package com.wetalk.config;
 
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.lang.NonNull;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.ViewResolverRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -18,21 +19,32 @@ public class WebConfig implements WebMvcConfigurer {
 
     /** Configure view resolvers (e.g., Thymeleaf, JSP). Not used by default in this REST-first app. */
     @Override
-    public void configureViewResolvers(ViewResolverRegistry registry) {
+    public void configureViewResolvers(@NonNull ViewResolverRegistry registry) {
         // e.g., registry.jsp(); or registry.viewResolver(thymeleafViewResolver)
     }
 
     /** Map additional static resource locations beyond the default classpath:/static, /public, /resources. */
     @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // e.g., registry.addResourceHandler("/files/**").addResourceLocations("file:/opt/app/files/");
+    public void addResourceHandlers(@NonNull ResourceHandlerRegistry registry) {
+        // Serve uploaded avatars from {user.dir}/uploads/
+        String userDir = System.getProperty("user.dir");
+        String uploads = "file:" + userDir + "/uploads/";
+        registry.addResourceHandler("/uploads/**")
+            .addResourceLocations(uploads)
+            .setCachePeriod(3600);
+
+        // Serve built-in pictures from {user.dir}/picture_base/
+        String pictureBase = "file:" + userDir + "/picture_base/";
+        registry.addResourceHandler("/picture_base/**")
+            .addResourceLocations(pictureBase)
+            .setCachePeriod(3600);
     }
 
     /**
      * Global CORS config for local frontend dev. Adjust origins/paths as needed for production.
      */
     @Override
-    public void addCorsMappings(CorsRegistry registry) {
+    public void addCorsMappings(@NonNull CorsRegistry registry) {
         registry.addMapping("/api/**")
             .allowedOrigins(
                 "http://localhost:5173", "http://127.0.0.1:5173",

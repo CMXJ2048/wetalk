@@ -1,0 +1,22 @@
+{
+  "name": "wetalk",
+  "version": "1.0.0",
+  "description": "## Overview WeTalk is an online social application designed to facilitate communication and interaction among users. Built using Java and Spring Boot, WeTalk provides a platform for user authentication, profile management, and social interactions.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CMXJ2048/wetalk.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CMXJ2048/wetalk/issues"
+  },
+  "homepage": "https://github.com/CMXJ2048/wetalk#readme"
+}
